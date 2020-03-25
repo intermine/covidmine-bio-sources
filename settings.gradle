@@ -1,0 +1,3 @@
+rootProject.name = 'bio-sources'
+include ':bio-source-gisaid-csv'
+project(':bio-source-gisaid-csv').projectDir = new File(settingsDir, './gisaid-csv')
