@@ -2,6 +2,17 @@
 <!-- This file details any extensions needed to the data model to store data from this source, everything else is automatically generated from the model description so this is all we need to do to add to the model. -->
 
 <classes>
-<!-- add any <class> elements here -->
-
+    <class name="Country" is-interface="true">
+        <attribute name="name" type="java.lang.String"/>
+        <attribute name="province_state" type="java.lang.String"/>
+        <attribute name="latitude" type="java.lang.Double"/>
+        <attribute name="longitude" type="java.lang.Double"/>
+        <collection name="dailyReports" referenced-type="DailyReport"/>
+    </class>
+    <class name="DailyReport" is-interface="true">
+        <attribute name="date" type="java.util.Date"/>
+        <attribute name="confirmed" type="java.lang.Integer"/>
+        <attribute name="deaths" type="java.lang.Integer"/>
+        <attribute name="recovered" type="java.lang.Integer"/>
+    </class>
 </classes>

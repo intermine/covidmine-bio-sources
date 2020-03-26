@@ -21,7 +21,7 @@ ext {
 
 subprojects {
     group = 'org.intermine'
-    version = '4.1.1'
+    version = '4.1.3'
 
     apply plugin: 'java'
     apply plugin: 'maven'
@@ -54,6 +54,7 @@ subprojects {
         testCompile group: 'xmlunit', name: 'xmlunit', version: '1.0'
         mergeModel group : "org.intermine", name: "intermine-objectstore", version: imVersion
         bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+        compile group: 'com.opencsv', name: 'opencsv', version: '4.0'
     }
 
     dbModelConfig {
