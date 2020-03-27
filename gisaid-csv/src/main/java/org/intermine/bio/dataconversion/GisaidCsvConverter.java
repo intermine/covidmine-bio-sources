@@ -1,7 +1,7 @@
 package org.intermine.bio.dataconversion;
 
 /*
- * Copyright (C) 2002-2019 FlyMine
+ * Copyright (C) 2002-2020 FlyMine
  *
  * This code may be freely distributed and modified under the
  * terms of the GNU Lesser General Public Licence.  This should
@@ -10,7 +10,6 @@ package org.intermine.bio.dataconversion;
  *
  */
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -34,7 +33,8 @@ import org.intermine.xml.full.Item;
  */
 public class GisaidCsvConverter extends DirectoryConverter
 {
-
+    private static final String FILE_NAME_PATTERN = "MM-dd-yyyy";
+    private static final char FILE_SEPARATOR = ',';
     public GisaidCsvConverter(ItemWriter writer, Model model) {
         super(writer, model);
     }
@@ -58,12 +58,12 @@ public class GisaidCsvConverter extends DirectoryConverter
         CSVReader reader = null;
         String dateAsString = dailyReportFileName.substring(0,
                 dailyReportFileName.indexOf(".csv"));
-        System.out.println("dateAsString:" + dateAsString);
         try {
-            reader = new CSVReader(new FileReader(dailyReportFile.getAbsolutePath()),',');
+            reader = new CSVReader(new FileReader(dailyReportFile.getAbsolutePath()),
+                    FILE_SEPARATOR);
             reader.readNext();//header
             while ((drLine = reader.readNext()) != null) {
-                createDailyReport(drLine, dateAsString);
+                createDistribution(drLine, dateAsString);
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -71,41 +71,40 @@ public class GisaidCsvConverter extends DirectoryConverter
         }
     }
 
-    private void createDailyReport(String[] dailyReport, String dateAsString) {
-        Item countryItem = createItem("Country");
-        Item dailyReportItem = createItem("DailyReport");
-        countryItem.setAttribute("name", dailyReport[3]);
-        countryItem.setAttributeIfNotNull("province_state", dailyReport[2]);
-        countryItem.setAttributeIfNotNull("latitude", dailyReport[5]);
-        countryItem.setAttributeIfNotNull("longitude", dailyReport[6]);
-        Date date = convertDate(dateAsString);
+    private void createDistribution(String[] dailyReport, String dateAsString) {
+        Item geoLocation = createItem("GeoLocation");
+        geoLocation.setAttributeIfNotNull("latitude", dailyReport[5]);
+        geoLocation.setAttributeIfNotNull("longitude", dailyReport[6]);
+        geoLocation.setAttributeIfNotNull("province", dailyReport[1]);
+        geoLocation.setAttributeIfNotNull("state", dailyReport[2]);
+        geoLocation.setAttributeIfNotNull("country", dailyReport[3]);
 
-        
-        dailyReportItem.setAttributeIfNotNull("date", Long.toString(date.getTime()));
-        dailyReportItem.setAttributeIfNotNull("confirmed", dailyReport[7]);
-        dailyReportItem.setAttributeIfNotNull("deaths", dailyReport[8]);
-        dailyReportItem.setAttributeIfNotNull("recovered", dailyReport[9]);
+        Item distribution = createItem("Distribution");
+        Date date = convertDate(dateAsString);
+        distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
+        distribution.setAttributeIfNotNull("confirmed", dailyReport[7]);
+        distribution.setAttributeIfNotNull("deaths", dailyReport[8]);
+        distribution.setAttributeIfNotNull("recovered", dailyReport[9]);
         try {
-            store(dailyReportItem);
-            List<String> ids = Arrays.asList(dailyReportItem.getIdentifier());
-            countryItem.setCollection("dailyReports", ids);
-            store(countryItem);
+            distribution.setReference("geoLocation", geoLocation);
+            store(distribution);
+            List<String> distributionIds = Arrays.asList(distribution.getIdentifier());
+            geoLocation.setCollection("distributions", distributionIds);
+            store(geoLocation);
         } catch (ObjectStoreException e) {
             e.printStackTrace();
         }
     }
 
     private Date convertDate(String dateAsString) {
-        String pattern = "MM-dd-yyyy";
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(FILE_NAME_PATTERN);
         Date date = null;
         try {
             date = simpleDateFormat.parse(dateAsString);
-            System.out.println("in convertDate method: " + date.toString());
-            return date;
         } catch (ParseException ex) {
             ex.printStackTrace();
+        } finally {
+            return date;
         }
-        return null;
     }
 }

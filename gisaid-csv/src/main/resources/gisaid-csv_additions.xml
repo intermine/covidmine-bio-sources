@@ -2,17 +2,20 @@
 <!-- This file details any extensions needed to the data model to store data from this source, everything else is automatically generated from the model description so this is all we need to do to add to the model. -->
 
 <classes>
-    <class name="Country" is-interface="true">
-        <attribute name="name" type="java.lang.String"/>
-        <attribute name="province_state" type="java.lang.String"/>
+    <class name="GeoLocation" is-interface="true">
         <attribute name="latitude" type="java.lang.Double"/>
         <attribute name="longitude" type="java.lang.Double"/>
-        <collection name="dailyReports" referenced-type="DailyReport"/>
+        <attribute name="province" type="java.lang.String"/>
+        <attribute name="state" type="java.lang.String"/>
+        <attribute name="country" type="java.lang.String"/>
+        <collection name="distributions" referenced-type="Distribution"/>
     </class>
-    <class name="DailyReport" is-interface="true">
+    <class name="Distribution" is-interface="true">
         <attribute name="date" type="java.util.Date"/>
         <attribute name="confirmed" type="java.lang.Integer"/>
         <attribute name="deaths" type="java.lang.Integer"/>
         <attribute name="recovered" type="java.lang.Integer"/>
+        <attribute name="active" type="java.lang.Integer"/><!--calculated-->
+        <reference name="geoLocation" referenced-type="GeoLocation"/>
     </class>
 </classes>
