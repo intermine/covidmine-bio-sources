@@ -15,17 +15,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import au.com.bytecode.opencsv.CSVReader;
+import org.apache.commons.lang.StringUtils;
 import org.intermine.dataconversion.DirectoryConverter;
 import org.intermine.dataconversion.ItemWriter;
 import org.intermine.metadata.Model;
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.xml.full.Item;
-
 
 /**
  * 
@@ -35,6 +33,9 @@ public class GisaidCsvConverter extends DirectoryConverter
 {
     private static final String FILE_NAME_PATTERN = "MM-dd-yyyy";
     private static final char FILE_SEPARATOR = ',';
+    private Map<String, Item> locations = new HashMap<>();
+    private Map<String, List<String>> locationDistributionIds = new HashMap<>();
+
     public GisaidCsvConverter(ItemWriter writer, Model model) {
         super(writer, model);
     }
@@ -43,16 +44,19 @@ public class GisaidCsvConverter extends DirectoryConverter
     public void process(File dataDir) throws Exception {
         if (dataDir.isDirectory()) {
             for (File dailyReport : dataDir.listFiles()) {
-                processFile(dailyReport);
+                storeDistributions(dailyReport);
             }
+            storeGeoLocations();
         }
     }
 
-    private void processFile(File dailyReportFile) {
+    private void storeDistributions(File dailyReportFile) {
         System.out.println(dailyReportFile.getName());
         String dailyReportFileName = dailyReportFile.getName();
-        if (!dailyReportFileName.equals("03-24-2020.csv")) {
-            return;//justone file for now
+        if (!dailyReportFileName.equals("03-24-2020.csv")
+                && !dailyReportFileName.equals("03-23-2020.csv")
+                && !dailyReportFileName.equals("03-22-2020.csv")) {
+            return;//just two files for now
         }
         String[] drLine = null;
         CSVReader reader = null;
@@ -63,7 +67,7 @@ public class GisaidCsvConverter extends DirectoryConverter
                     FILE_SEPARATOR);
             reader.readNext();//header
             while ((drLine = reader.readNext()) != null) {
-                createDistribution(drLine, dateAsString);
+                storeDistribution(drLine, dateAsString);
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -71,14 +75,9 @@ public class GisaidCsvConverter extends DirectoryConverter
         }
     }
 
-    private void createDistribution(String[] dailyReport, String dateAsString) {
-        Item geoLocation = createItem("GeoLocation");
-        geoLocation.setAttributeIfNotNull("latitude", dailyReport[5]);
-        geoLocation.setAttributeIfNotNull("longitude", dailyReport[6]);
-        geoLocation.setAttributeIfNotNull("province", dailyReport[1]);
-        geoLocation.setAttributeIfNotNull("state", dailyReport[2]);
-        geoLocation.setAttributeIfNotNull("country", dailyReport[3]);
-
+    private void storeDistribution(String[] dailyReport, String dateAsString) {
+        GeoLocation location = new GeoLocation(dailyReport);
+        Item geoLocation = createGeoLocation(location);
         Item distribution = createItem("Distribution");
         Date date = convertDate(dateAsString);
         distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
@@ -88,11 +87,25 @@ public class GisaidCsvConverter extends DirectoryConverter
         try {
             distribution.setReference("geoLocation", geoLocation);
             store(distribution);
-            List<String> distributionIds = Arrays.asList(distribution.getIdentifier());
-            geoLocation.setCollection("distributions", distributionIds);
-            store(geoLocation);
+            cacheDistributionIds(location.locationKey, distribution.getIdentifier());
         } catch (ObjectStoreException e) {
             e.printStackTrace();
+        }
+    }
+
+    private Item createGeoLocation(GeoLocation location) {
+        String locationKey = location.locationKey;
+        if (locations.containsKey(locationKey)) {
+            return locations.get(locationKey);
+        } else {
+            Item geoLocationItem = createItem("GeoLocation");
+            geoLocationItem.setAttributeIfNotNull("latitude", location.latitude);
+            geoLocationItem.setAttributeIfNotNull("longitude", location.longitude);
+            geoLocationItem.setAttributeIfNotNull("province", location.province);
+            geoLocationItem.setAttributeIfNotNull("state", location.state);
+            geoLocationItem.setAttributeIfNotNull("country", location.country);
+            locations.put(locationKey, geoLocationItem);
+            return geoLocationItem;
         }
     }
 
@@ -107,4 +120,68 @@ public class GisaidCsvConverter extends DirectoryConverter
             return date;
         }
     }
+
+    private void cacheDistributionIds(String geoLocationKey, String distributionId) {
+        if (locationDistributionIds.containsKey(geoLocationKey)) {
+            List<String> ids = locationDistributionIds.get(geoLocationKey);
+            List<String> updatedIds = new ArrayList<>(ids);
+            updatedIds.add(distributionId);
+            locationDistributionIds.put(geoLocationKey, updatedIds);
+        } else {
+            List<String> ids = Arrays.asList(distributionId);
+            locationDistributionIds.put(geoLocationKey, ids);
+        }
+    }
+
+    private void storeGeoLocations() {
+        try {
+            for (String locationKey : locations.keySet()) {
+                Item geoLocation = locations.get(locationKey);
+                geoLocation.setCollection("distributions", locationDistributionIds.get(locationKey));
+                store(geoLocation);
+            }
+        } catch (ObjectStoreException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class GeoLocation {
+        String latitude;
+        String longitude;
+        String province;
+        String state;
+        String country;
+        String locationKey;
+
+        public GeoLocation(String[] fields) {
+            latitude = (fields[5] != null) ? fields[5] : StringUtils.EMPTY;
+            longitude = (fields[6] != null) ? fields[6] : StringUtils.EMPTY;
+            province = (fields[1] != null) ? fields[1] : StringUtils.EMPTY;
+            state = (fields[2] != null) ? fields[2] : StringUtils.EMPTY;
+            country = (fields[3] != null) ? fields[3] : StringUtils.EMPTY;
+            locationKey = latitude + longitude + province + state + country;
+            locationKey = StringUtils.deleteWhitespace(locationKey);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
