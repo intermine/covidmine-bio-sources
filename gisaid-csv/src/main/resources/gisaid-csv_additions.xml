@@ -17,5 +17,6 @@
         <attribute name="recovered" type="java.lang.Integer"/>
         <attribute name="active" type="java.lang.Integer"/><!--calculated-->
         <reference name="geoLocation" referenced-type="GeoLocation"/>
+        <collection name="dataSets" referenced-type="DataSet"/>
     </class>
 </classes>
