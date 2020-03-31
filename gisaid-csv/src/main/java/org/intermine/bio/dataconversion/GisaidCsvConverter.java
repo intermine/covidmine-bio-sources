@@ -12,6 +12,7 @@ package org.intermine.bio.dataconversion;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -19,7 +20,6 @@ import java.util.*;
 
 import au.com.bytecode.opencsv.CSVReader;
 import org.apache.commons.lang.StringUtils;
-import org.intermine.dataconversion.DirectoryConverter;
 import org.intermine.dataconversion.ItemWriter;
 import org.intermine.metadata.Model;
 import org.intermine.objectstore.ObjectStoreException;
@@ -27,23 +27,29 @@ import org.intermine.xml.full.Item;
 
 /**
  * 
- * @author Daniela BUtano
+ * @author Daniela Butano
  */
-public class GisaidCsvConverter extends DirectoryConverter
-{
+public class GisaidCsvConverter extends BioDirectoryConverter {
     private static final String FILE_NAME_PATTERN = "MM-dd-yyyy";
+    private static final String FILE_EXTENSION = ".csv";
     private static final char FILE_SEPARATOR = ',';
+    private GsaidHeaderMap header;
     private Map<String, Item> locations = new HashMap<>();
     private Map<String, List<String>> locationDistributionIds = new HashMap<>();
 
     public GisaidCsvConverter(ItemWriter writer, Model model) {
-        super(writer, model);
+        super(writer, model, "GISAID ", "Data set by Johns Hopkins CSSE");
     }
 
     @Override
     public void process(File dataDir) throws Exception {
         if (dataDir.isDirectory()) {
-            for (File dailyReport : dataDir.listFiles()) {
+            for (File dailyReport : dataDir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String s) {
+                    return s.toLowerCase().endsWith(FILE_EXTENSION);
+                }
+            })) {
                 storeDistributions(dailyReport);
             }
             storeGeoLocations();
@@ -51,13 +57,9 @@ public class GisaidCsvConverter extends DirectoryConverter
     }
 
     private void storeDistributions(File dailyReportFile) {
-        System.out.println(dailyReportFile.getName());
         String dailyReportFileName = dailyReportFile.getName();
-        if (!dailyReportFileName.equals("03-24-2020.csv")
-                && !dailyReportFileName.equals("03-23-2020.csv")
-                && !dailyReportFileName.equals("03-22-2020.csv")) {
-            return;//just two files for now
-        }
+        System.out.println("Processing " + dailyReportFileName);
+
         String[] drLine = null;
         CSVReader reader = null;
         String dateAsString = dailyReportFileName.substring(0,
@@ -65,7 +67,7 @@ public class GisaidCsvConverter extends DirectoryConverter
         try {
             reader = new CSVReader(new FileReader(dailyReportFile.getAbsolutePath()),
                     FILE_SEPARATOR);
-            reader.readNext();//header
+            header = new GsaidHeaderMap(reader.readNext());
             while ((drLine = reader.readNext()) != null) {
                 storeDistribution(drLine, dateAsString);
             }
@@ -81,9 +83,13 @@ public class GisaidCsvConverter extends DirectoryConverter
         Item distribution = createItem("Distribution");
         Date date = convertDate(dateAsString);
         distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
-        distribution.setAttributeIfNotNull("confirmed", dailyReport[7]);
-        distribution.setAttributeIfNotNull("deaths", dailyReport[8]);
-        distribution.setAttributeIfNotNull("recovered", dailyReport[9]);
+        String confirmed = getFieldValue(Header.CONFIRMED, dailyReport);
+        distribution.setAttributeIfNotNull("confirmed", confirmed);
+        String deaths = getFieldValue(Header.DEATHS, dailyReport);
+        distribution.setAttributeIfNotNull("deaths", deaths);
+        String recovered = getFieldValue(Header.RECOVERED, dailyReport);
+        distribution.setAttributeIfNotNull("recovered", recovered);
+        distribution.setAttribute("active", calculateActive(confirmed, recovered, deaths));
         try {
             distribution.setReference("geoLocation", geoLocation);
             store(distribution);
@@ -145,6 +151,29 @@ public class GisaidCsvConverter extends DirectoryConverter
         }
     }
 
+    private String getFieldValue(Header label, String[] fields) {
+        int pos;
+        pos = header.getPosition(label);
+        if (pos != -1) {
+            return fields[pos];
+        }
+        return StringUtils.EMPTY;
+    }
+
+    private String calculateActive(String confirmed, String recovered, String deaths) {
+        int active = 0;
+        if (!confirmed.isEmpty()) {
+            active = Integer.parseInt(confirmed);
+        }
+        if (!recovered.isEmpty()) {
+            active = active - Integer.parseInt(recovered);
+        }
+        if (!deaths.isEmpty()) {
+            active = active - Integer.parseInt(deaths);
+        }
+            return Integer.toString(active);
+    }
+
     private class GeoLocation {
         String latitude;
         String longitude;
@@ -154,11 +183,11 @@ public class GisaidCsvConverter extends DirectoryConverter
         String locationKey;
 
         public GeoLocation(String[] fields) {
-            latitude = (fields[5] != null) ? fields[5] : StringUtils.EMPTY;
-            longitude = (fields[6] != null) ? fields[6] : StringUtils.EMPTY;
-            province = (fields[1] != null) ? fields[1] : StringUtils.EMPTY;
-            state = (fields[2] != null) ? fields[2] : StringUtils.EMPTY;
-            country = (fields[3] != null) ? fields[3] : StringUtils.EMPTY;
+            latitude = getFieldValue(Header.LATITUDE, fields);
+            longitude = getFieldValue(Header.LONGITUDE, fields);
+            province = getFieldValue(Header.PROVINCE, fields);
+            state = getFieldValue(Header.STATE, fields);
+            country = getFieldValue(Header.COUNTRY, fields);
             locationKey = latitude + longitude + province + state + country;
             locationKey = StringUtils.deleteWhitespace(locationKey);
         }
