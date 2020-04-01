@@ -89,7 +89,11 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         distribution.setAttributeIfNotNull("deaths", deaths);
         String recovered = getFieldValue(Header.RECOVERED, dailyReport);
         distribution.setAttributeIfNotNull("recovered", recovered);
-        distribution.setAttribute("active", calculateActive(confirmed, recovered, deaths));
+        String active = getFieldValue(Header.ACTIVE, dailyReport);
+        if (active.equals(StringUtils.EMPTY) || "0".equals(active)) {
+            active = calculateActive(confirmed, recovered, deaths);
+        }
+        distribution.setAttribute("active", active);
         try {
             distribution.setReference("geoLocation", geoLocation);
             store(distribution);
@@ -143,7 +147,8 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         try {
             for (String locationKey : locations.keySet()) {
                 Item geoLocation = locations.get(locationKey);
-                geoLocation.setCollection("distributions", locationDistributionIds.get(locationKey));
+                geoLocation.setCollection("distributions",
+                        locationDistributionIds.get(locationKey));
                 store(geoLocation);
             }
         } catch (ObjectStoreException e) {
@@ -164,6 +169,9 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         int active = 0;
         if (!confirmed.isEmpty()) {
             active = Integer.parseInt(confirmed);
+            if (active == 0) {
+                return Integer.toString(active);
+            }
         }
         if (!recovered.isEmpty()) {
             active = active - Integer.parseInt(recovered);
@@ -171,7 +179,10 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         if (!deaths.isEmpty()) {
             active = active - Integer.parseInt(deaths);
         }
-            return Integer.toString(active);
+        if (active < 0) {
+            active = 0;
+        }
+        return Integer.toString(active);
     }
 
     private class GeoLocation {

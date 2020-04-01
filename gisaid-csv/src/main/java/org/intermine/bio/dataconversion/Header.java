@@ -23,5 +23,6 @@ public enum Header {
     LONGITUDE,
     CONFIRMED,
     DEATHS,
-    RECOVERED
+    RECOVERED,
+    ACTIVE
 }

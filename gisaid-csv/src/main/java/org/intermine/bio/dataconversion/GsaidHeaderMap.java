@@ -41,6 +41,8 @@ public class GsaidHeaderMap {
                 headerMap.put(Header.DEATHS, pos);
             } else if (header.contains("Recovered")) {
                 headerMap.put(Header.RECOVERED, pos);
+            } else if (header.contains("Active")) {
+                headerMap.put(Header.ACTIVE, pos);
             }
         }
     }
