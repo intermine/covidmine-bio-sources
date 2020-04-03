@@ -160,7 +160,7 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         int pos;
         pos = header.getPosition(label);
         if (pos != -1) {
-            return fields[pos];
+            return fields[pos].trim();
         }
         return StringUtils.EMPTY;
     }
