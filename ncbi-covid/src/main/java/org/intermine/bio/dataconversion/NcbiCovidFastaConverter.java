@@ -30,13 +30,18 @@ import org.intermine.model.bio.SequenceFeature;
 import org.intermine.objectstore.ObjectStore;
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.util.DynamicUtil;
+import org.intermine.bio.dataconversion.FastaLoaderTask;
+
 
 /**
  * See https://intermine.readthedocs.io/en/latest/database/data-sources/library/fasta/ for details on the FASTA source.
  * @author
  */
-public class NcbiCovidConverter extends FastaLoaderTask
+public class NcbiCovidFastaConverter extends FastaLoaderTask
 {
+    protected static final Logger LOG = Logger.getLogger(NcbiCovidFastaConverter.class);
+    //private static final String ORG_HEADER = " Homo sapiens ";
+    private static final String REFSEQ = "refseq";
 
     /**
      * {@inheritDoc}
@@ -47,10 +52,91 @@ public class NcbiCovidConverter extends FastaLoaderTask
             BioEntity bioEntity, Organism organism,
             DataSet dataSet)
         throws ObjectStoreException {
-        // String header = bioJavaSequence.getAccession().getID();
+        String header = bioJavaSequence.getAccession().getID();
 
-        // See BioJava 4.0 docs for helper methods
-        // to access the "bioJavaSequence" object
+        String seqIdentifier = null;
+        String geoLocation = null;
+        String isComplete= "N/A";
+        String isRef = "N";
+
+        // for the reference seq
+        // >NC_045512 |China|refseq| complete
+        // for the rest
+        // >MT123291 |China|complete
+
+        String[] headerSubStrings = header.split("\\|");
+        int i =0;
+        for (String token : headerSubStrings ) {
+            if (i == 0) {
+                seqIdentifier = token;
+            }
+            if (i == 1) {
+                geoLocation = token;
+            }
+            if (i == 2) {
+                if (token.contains(REFSEQ)) {
+                    isRef = "Y";
+                    isComplete = "Y";
+                    continue;
+                } else {
+                    isComplete = "Y";
+                }
+            }
+            i++;
+
+
+            ObjectStore os = getIntegrationWriter().getObjectStore();
+            Model model = os.getModel();
+//        if (model.hasClassDescriptor(model.getPackageName() + ".Region)) {
+//            Class<? extends FastPathObject> cdsCls =
+//                    model.getClassDescriptorByName("UTR").getType();
+//            if (!DynamicUtil.isInstance(bioEntity, cdsCls)) {
+//                throw new RuntimeException("the InterMineObject passed to "
+//                        + "FlyBaseUTRFastaDataLoaderTask.extraProcessing() is not a "
+//                        + "UTR: " + bioEntity);
+//            }
+            
+            if (null == seqIdentifier) {
+                continue;
+            }
+            InterMineObject region = getRegion(seqIdentifier, geoLocation, isRef, isComplete,
+                    organism, model);
+            if (region != null) {
+                Set<? extends InterMineObject> mrnas = new HashSet(Collections.singleton(region));
+                bioEntity.setFieldValue("transcripts", mrnas);
+            }
+        }
     }
 
+
+
+    /**
+     * Create a Region with the given primaryIdentifier and organism or return null if Region is not in
+     * the data model.
+     * @param seqIdentifier primaryIdentifier of Region to create
+     * @param geoLocation
+     * @param isRef
+     * @param isComplete
+     * @param organism orgnism of Region to create
+     * @param model the data model
+     * @return an InterMineObject representing a Region or null if Region not in the data model
+     * @throws ObjectStoreException if problem storing
+     */
+    private InterMineObject getRegion(String seqIdentifier, String geoLocation, String isRef,
+                                      String isComplete, Organism organism, Model model)
+            throws ObjectStoreException {
+        InterMineObject region = null;
+        if (model.hasClassDescriptor(model.getPackageName() + ".MRNA")) {
+            @SuppressWarnings("unchecked") Class<? extends InterMineObject> mrnaCls =
+                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("MRNA").getType();
+            region = getDirectDataLoader().createObject(mrnaCls);
+            region.setFieldValue("primaryIdentifier", seqIdentifier);
+            region.setFieldValue("organism", organism);
+            getDirectDataLoader().store(region);
+        }
+        return region;
+    }
+
+
 }
+
