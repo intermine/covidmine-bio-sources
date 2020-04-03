@@ -12,10 +12,10 @@
     </class>
     <class name="Distribution" is-interface="true">
         <attribute name="date" type="java.util.Date"/>
-        <attribute name="confirmed" type="java.lang.Integer"/>
-        <attribute name="deaths" type="java.lang.Integer"/>
-        <attribute name="recovered" type="java.lang.Integer"/>
-        <attribute name="active" type="java.lang.Integer"/><!--calculated-->
+        <attribute name="totalConfirmed" type="java.lang.Integer"/>
+        <attribute name="totalDeaths" type="java.lang.Integer"/>
+        <attribute name="totalRecovered" type="java.lang.Integer"/>
+        <attribute name="totalActive" type="java.lang.Integer"/>
         <reference name="geoLocation" referenced-type="GeoLocation"/>
         <collection name="dataSets" referenced-type="DataSet"/>
     </class>

@@ -84,16 +84,16 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         Date date = convertDate(dateAsString);
         distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
         String confirmed = getFieldValue(Header.CONFIRMED, dailyReport);
-        distribution.setAttributeIfNotNull("confirmed", confirmed);
+        distribution.setAttributeIfNotNull("totalConfirmed", confirmed);
         String deaths = getFieldValue(Header.DEATHS, dailyReport);
-        distribution.setAttributeIfNotNull("deaths", deaths);
+        distribution.setAttributeIfNotNull("totalDeaths", deaths);
         String recovered = getFieldValue(Header.RECOVERED, dailyReport);
-        distribution.setAttributeIfNotNull("recovered", recovered);
+        distribution.setAttributeIfNotNull("totalRecovered", recovered);
         String active = getFieldValue(Header.ACTIVE, dailyReport);
         if (active.equals(StringUtils.EMPTY) || "0".equals(active)) {
             active = calculateActive(confirmed, recovered, deaths);
         }
-        distribution.setAttribute("active", active);
+        distribution.setAttribute("totalActive", active);
         try {
             distribution.setReference("geoLocation", geoLocation);
             store(distribution);
