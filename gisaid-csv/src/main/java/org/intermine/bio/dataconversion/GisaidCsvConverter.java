@@ -24,12 +24,14 @@ import org.intermine.dataconversion.ItemWriter;
 import org.intermine.metadata.Model;
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.xml.full.Item;
+import org.apache.log4j.Logger;
 
 /**
  * 
  * @author Daniela Butano
  */
 public class GisaidCsvConverter extends BioDirectoryConverter {
+    private static final Logger LOG = Logger.getLogger(GisaidCsvConverter.class);
     private static final String FILE_NAME_PATTERN = "MM-dd-yyyy";
     private static final String FILE_EXTENSION = ".csv";
     private static final char FILE_SEPARATOR = ',';
@@ -43,6 +45,7 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
 
     @Override
     public void process(File dataDir) throws Exception {
+        LOG.warn("GisaidCsvConverter process files started..");
         if (dataDir.isDirectory()) {
             for (File dailyReport : dataDir.listFiles(new FilenameFilter() {
                 @Override
@@ -121,6 +124,7 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
 
     private Date convertDate(String dateAsString) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(FILE_NAME_PATTERN);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date date = null;
         try {
             date = simpleDateFormat.parse(dateAsString);
