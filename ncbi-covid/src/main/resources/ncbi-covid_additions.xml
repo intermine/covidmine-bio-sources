@@ -3,5 +3,10 @@
 
 <classes>
 <!-- add any <class> elements here -->
+    <class name="Region" is-interface="true">
+        <attribute name="geoLocation" type="java.lang.String"/>
+        <attribute name="nucleotideCompleteness" type="java.lang.String"/>
+        <attribute name="referenceSequence" type="java.lang.String"/>
+    </class>
 
 </classes>
