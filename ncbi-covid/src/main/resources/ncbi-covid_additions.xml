@@ -3,10 +3,26 @@
 
 <classes>
 <!-- add any <class> elements here -->
-    <class name="Region" is-interface="true">
-        <attribute name="geoLocation" type="java.lang.String"/>
+
+    <class name="Strain" is-interface="true">
         <attribute name="nucleotideCompleteness" type="java.lang.String"/>
         <attribute name="referenceSequence" type="java.lang.String"/>
+        <reference name="geoLocation" referenced-type="GeoLocation" reverse-reference="strains"/>
     </class>
+
+
+    <class name="Region" extends="SequenceFeature"  is-interface="true">
+        <attribute name="nucleotideCompleteness" type="java.lang.String"/>
+        <attribute name="referenceSequence" type="java.lang.String"/>
+        <reference name="geoLocation" referenced-type="GeoLocation" reverse-reference="regions"/>
+    </class>
+
+
+    <class name="GeoLocation" is-interface="true">
+        <attribute name="state" type="java.lang.String"/>
+        <collection name="strains" referenced-type="Strain" reverse-reference="geoLocation"/>
+        <collection name="regions" referenced-type="Region" reverse-reference="geoLocation"/>
+    </class>
+
 
 </classes>

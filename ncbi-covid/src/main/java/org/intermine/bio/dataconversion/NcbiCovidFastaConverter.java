@@ -34,7 +34,8 @@ import org.intermine.bio.dataconversion.FastaLoaderTask;
 
 
 /**
- * See https://intermine.readthedocs.io/en/latest/database/data-sources/library/fasta/ for details on the FASTA source.
+ * See https://intermine.readthedocs.io/en/latest/database/data-sources/library/fasta/
+ * for details on the FASTA source.
  * @author
  */
 public class NcbiCovidFastaConverter extends FastaLoaderTask
@@ -99,12 +100,16 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
             if (null == seqIdentifier) {
                 continue;
             }
-            InterMineObject region = getRegion(seqIdentifier, geoLocation, isRef, isComplete,
+//            InterMineObject strain = setStrain(seqIdentifier, geoLocation, isRef, isComplete,
+//                    organism, model);
+
+            InterMineObject region = setRegion(seqIdentifier, geoLocation, isRef, isComplete,
                     organism, model);
-            if (region != null) {
-                Set<? extends InterMineObject> mrnas = new HashSet(Collections.singleton(region));
-                bioEntity.setFieldValue("transcripts", mrnas);
-            }
+
+            //            if (strain != null) {
+//                Set<? extends InterMineObject> mrnas = new HashSet(Collections.singleton(strain));
+//                bioEntity.setFieldValue("transcripts", mrnas);
+//            }
         }
     }
 
@@ -122,20 +127,54 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
      * @return an InterMineObject representing a Region or null if Region not in the data model
      * @throws ObjectStoreException if problem storing
      */
-    private InterMineObject getRegion(String seqIdentifier, String geoLocation, String isRef,
+    private InterMineObject setStrain(String seqIdentifier, String geoLocation, String isRef,
+                                      String isComplete, Organism organism, Model model)
+            throws ObjectStoreException {
+        InterMineObject strain = null;
+        if (model.hasClassDescriptor(model.getPackageName() + ".Strain")) {
+            @SuppressWarnings("unchecked") Class<? extends InterMineObject> strainCls =
+                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("Strain").getType();
+            strain = getDirectDataLoader().createObject(strainCls);
+            strain.setFieldValue("primaryIdentifier", seqIdentifier);
+            strain.setFieldValue("referenceSequence", isRef);
+            strain.setFieldValue("nucleotideCompleteness", isComplete);
+            strain.setFieldValue("organism", organism);
+
+            getDirectDataLoader().store(strain);
+        }
+        return strain;
+    }
+
+    /**
+     * Create a Region with the given primaryIdentifier and organism or return null if Region is not in
+     * the data model.
+     * @param seqIdentifier primaryIdentifier of Region to create
+     * @param geoLocation
+     * @param isRef
+     * @param isComplete
+     * @param organism orgnism of Region to create
+     * @param model the data model
+     * @return an InterMineObject representing a Region or null if Region not in the data model
+     * @throws ObjectStoreException if problem storing
+     */
+    private InterMineObject setRegion(String seqIdentifier, String geoLocation, String isRef,
                                       String isComplete, Organism organism, Model model)
             throws ObjectStoreException {
         InterMineObject region = null;
-        if (model.hasClassDescriptor(model.getPackageName() + ".MRNA")) {
-            @SuppressWarnings("unchecked") Class<? extends InterMineObject> mrnaCls =
-                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("MRNA").getType();
-            region = getDirectDataLoader().createObject(mrnaCls);
+        if (model.hasClassDescriptor(model.getPackageName() + ".Strain")) {
+            @SuppressWarnings("unchecked") Class<? extends InterMineObject> strainCls =
+                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("Strain").getType();
+            region = getDirectDataLoader().createObject(strainCls);
             region.setFieldValue("primaryIdentifier", seqIdentifier);
+            region.setFieldValue("referenceSequence", isRef);
+            region.setFieldValue("nucleotideCompleteness", isComplete);
             region.setFieldValue("organism", organism);
+
             getDirectDataLoader().store(region);
         }
         return region;
     }
+
 
 
 }
