@@ -169,6 +169,11 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
         return StringUtils.EMPTY;
     }
 
+    private String getCountry(Header label, String[] fields) {
+        String originalCountry = getFieldValue(label, fields);
+        return CountryUtils.getCountry(originalCountry);
+    }
+
     private String calculateActive(String confirmed, String recovered, String deaths) {
         int active = 0;
         if (!confirmed.isEmpty()) {
@@ -202,7 +207,7 @@ public class GisaidCsvConverter extends BioDirectoryConverter {
             longitude = getFieldValue(Header.LONGITUDE, fields);
             province = getFieldValue(Header.PROVINCE, fields);
             state = getFieldValue(Header.STATE, fields);
-            country = getFieldValue(Header.COUNTRY, fields);
+            country = getCountry(Header.COUNTRY, fields);
             locationKey = latitude + longitude + province + state + country;
             locationKey = StringUtils.deleteWhitespace(locationKey);
         }
