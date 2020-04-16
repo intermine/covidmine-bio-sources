@@ -10,27 +10,17 @@ package org.intermine.bio.dataconversion;
  *
  */
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.biojava.nbio.core.sequence.template.Sequence;
 import org.intermine.metadata.Model;
-import org.intermine.model.FastPathObject;
 import org.intermine.model.InterMineObject;
-import org.intermine.model.bio.BioEntity;
-import org.intermine.model.bio.Chromosome;
-import org.intermine.model.bio.DataSet;
-import org.intermine.model.bio.Location;
-import org.intermine.model.bio.Organism;
-import org.intermine.model.bio.SequenceFeature;
+import org.intermine.model.bio.*;
 import org.intermine.objectstore.ObjectStore;
 import org.intermine.objectstore.ObjectStoreException;
-import org.intermine.util.DynamicUtil;
-import org.intermine.bio.dataconversion.FastaLoaderTask;
+import org.intermine.xml.full.Item;
 
 
 /**
@@ -43,6 +33,32 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
     protected static final Logger LOG = Logger.getLogger(NcbiCovidFastaConverter.class);
     //private static final String ORG_HEADER = " Homo sapiens ";
     private static final String REFSEQ = "refseq";
+    private Map<String, Item> geolocs = new HashMap<>();
+
+
+    private Map<String, GeoLocation> geoMap = new HashMap<String, GeoLocation>();
+
+    /**
+     * Return a Chromosome object for the given item.
+     * @param country the id
+     * @param organism the Organism to reference from the Chromosome
+     * @return the Chromosome
+     * @throws ObjectStoreException if problem fetching Chromosome
+     */
+    protected GeoLocation getGeoLocation(String country, Organism organism)
+            throws ObjectStoreException {
+        if (geoMap.containsKey(country)) {
+            return geoMap.get(country);
+        }
+        GeoLocation gLoc = getDirectDataLoader().createObject(GeoLocation.class);
+        gLoc.setFieldValue("country",country);
+//        gLoc.setOrganism(organism);
+//        gLoc.addDataSets(getDataSet());
+        getDirectDataLoader().store(gLoc);
+        geoMap.put(country, gLoc);
+        return gLoc;
+    }
+
 
     /**
      * {@inheritDoc}
@@ -56,9 +72,11 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
         String header = bioJavaSequence.getAccession().getID();
 
         String seqIdentifier = null;
-        String geoLocation = null;
+        String country = null;
         String isComplete= "N/A";
         String isRef = "N";
+
+        Map<String, String[]> recordMap = new HashMap<String, String[]>();
 
         // for the reference seq
         // >NC_045512 |China|refseq| complete
@@ -68,11 +86,12 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
         String[] headerSubStrings = header.split("\\|");
         int i =0;
         for (String token : headerSubStrings ) {
+            LOG.info("XXXX [" + i + "] ->" + token + "<-");
             if (i == 0) {
-                seqIdentifier = token;
+                seqIdentifier = token.trim();
             }
             if (i == 1) {
-                geoLocation = token;
+                country = token;
             }
             if (i == 2) {
                 if (token.contains(REFSEQ)) {
@@ -84,65 +103,38 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
                 }
             }
             i++;
+        }
 
 
-            ObjectStore os = getIntegrationWriter().getObjectStore();
+
+        ObjectStore os = getIntegrationWriter().getObjectStore();
             Model model = os.getModel();
-//        if (model.hasClassDescriptor(model.getPackageName() + ".Region)) {
-//            Class<? extends FastPathObject> cdsCls =
-//                    model.getClassDescriptorByName("UTR").getType();
-//            if (!DynamicUtil.isInstance(bioEntity, cdsCls)) {
-//                throw new RuntimeException("the InterMineObject passed to "
-//                        + "FlyBaseUTRFastaDataLoaderTask.extraProcessing() is not a "
-//                        + "UTR: " + bioEntity);
+//            if (null == seqIdentifier) {
+//                continue;
 //            }
-            
-            if (null == seqIdentifier) {
-                continue;
-            }
+
 //            InterMineObject strain = setStrain(seqIdentifier, geoLocation, isRef, isComplete,
 //                    organism, model);
 
-            InterMineObject region = setRegion(seqIdentifier, geoLocation, isRef, isComplete,
-                    organism, model);
+        LOG.info("YYY " + seqIdentifier + "|" + isRef + "|" + isComplete);
+
+
+        bioEntity.setFieldValue("referenceSequence", isRef);
+        bioEntity.setFieldValue("nucleotideCompleteness", isComplete);
+
+        GeoLocation  geoLocation = getGeoLocation(country, organism);
+
+        bioEntity.setFieldValue("geoLocation", geoLocation);
+
+
+//        InterMineObject region = setRegion(seqIdentifier, geoLocation, isRef, isComplete,
+//                    organism, model);
 
             //            if (strain != null) {
 //                Set<? extends InterMineObject> mrnas = new HashSet(Collections.singleton(strain));
 //                bioEntity.setFieldValue("transcripts", mrnas);
 //            }
-        }
-    }
 
-
-
-    /**
-     * Create a Region with the given primaryIdentifier and organism or return null if Region is not in
-     * the data model.
-     * @param seqIdentifier primaryIdentifier of Region to create
-     * @param geoLocation
-     * @param isRef
-     * @param isComplete
-     * @param organism orgnism of Region to create
-     * @param model the data model
-     * @return an InterMineObject representing a Region or null if Region not in the data model
-     * @throws ObjectStoreException if problem storing
-     */
-    private InterMineObject setStrain(String seqIdentifier, String geoLocation, String isRef,
-                                      String isComplete, Organism organism, Model model)
-            throws ObjectStoreException {
-        InterMineObject strain = null;
-        if (model.hasClassDescriptor(model.getPackageName() + ".Strain")) {
-            @SuppressWarnings("unchecked") Class<? extends InterMineObject> strainCls =
-                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("Strain").getType();
-            strain = getDirectDataLoader().createObject(strainCls);
-            strain.setFieldValue("primaryIdentifier", seqIdentifier);
-            strain.setFieldValue("referenceSequence", isRef);
-            strain.setFieldValue("nucleotideCompleteness", isComplete);
-            strain.setFieldValue("organism", organism);
-
-            getDirectDataLoader().store(strain);
-        }
-        return strain;
     }
 
     /**
@@ -152,7 +144,7 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
      * @param geoLocation
      * @param isRef
      * @param isComplete
-     * @param organism orgnism of Region to create
+     * @param organism organism of Region to create
      * @param model the data model
      * @return an InterMineObject representing a Region or null if Region not in the data model
      * @throws ObjectStoreException if problem storing
@@ -161,10 +153,10 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
                                       String isComplete, Organism organism, Model model)
             throws ObjectStoreException {
         InterMineObject region = null;
-        if (model.hasClassDescriptor(model.getPackageName() + ".Strain")) {
-            @SuppressWarnings("unchecked") Class<? extends InterMineObject> strainCls =
-                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("Strain").getType();
-            region = getDirectDataLoader().createObject(strainCls);
+        if (model.hasClassDescriptor(model.getPackageName() + ".Region")) {
+            @SuppressWarnings("unchecked") Class<? extends InterMineObject> regionCls =
+                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("Region").getType();
+            region = getDirectDataLoader().createObject(regionCls);
             region.setFieldValue("primaryIdentifier", seqIdentifier);
             region.setFieldValue("referenceSequence", isRef);
             region.setFieldValue("nucleotideCompleteness", isComplete);

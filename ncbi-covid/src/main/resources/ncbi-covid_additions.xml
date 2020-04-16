@@ -17,9 +17,8 @@
         <reference name="geoLocation" referenced-type="GeoLocation" reverse-reference="regions"/>
     </class>
 
-
     <class name="GeoLocation" is-interface="true">
-        <attribute name="state" type="java.lang.String"/>
+        <attribute name="country" type="java.lang.String"/>
         <collection name="strains" referenced-type="Strain" reverse-reference="geoLocation"/>
         <collection name="regions" referenced-type="Region" reverse-reference="geoLocation"/>
     </class>
