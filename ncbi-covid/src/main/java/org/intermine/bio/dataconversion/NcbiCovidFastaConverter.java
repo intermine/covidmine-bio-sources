@@ -10,17 +10,18 @@ package org.intermine.bio.dataconversion;
  *
  */
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.biojava.nbio.core.sequence.template.Sequence;
 import org.intermine.metadata.Model;
-import org.intermine.model.InterMineObject;
-import org.intermine.model.bio.*;
+import org.intermine.model.bio.BioEntity;
+import org.intermine.model.bio.DataSet;
+import org.intermine.model.bio.GeoLocation;
+import org.intermine.model.bio.Organism;
 import org.intermine.objectstore.ObjectStore;
 import org.intermine.objectstore.ObjectStoreException;
-import org.intermine.xml.full.Item;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -31,11 +32,7 @@ import org.intermine.xml.full.Item;
 public class NcbiCovidFastaConverter extends FastaLoaderTask
 {
     protected static final Logger LOG = Logger.getLogger(NcbiCovidFastaConverter.class);
-    //private static final String ORG_HEADER = " Homo sapiens ";
     private static final String REFSEQ = "refseq";
-    private Map<String, Item> geolocs = new HashMap<>();
-
-
     private Map<String, GeoLocation> geoMap = new HashMap<String, GeoLocation>();
 
     /**
@@ -86,7 +83,7 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
         String[] headerSubStrings = header.split("\\|");
         int i =0;
         for (String token : headerSubStrings ) {
-            LOG.info("XXXX [" + i + "] ->" + token + "<-");
+//            LOG.info("XXXX [" + i + "] ->" + token + "<-");
             if (i == 0) {
                 seqIdentifier = token.trim();
             }
@@ -105,8 +102,6 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
             i++;
         }
 
-
-
         ObjectStore os = getIntegrationWriter().getObjectStore();
             Model model = os.getModel();
 //            if (null == seqIdentifier) {
@@ -123,12 +118,7 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
         bioEntity.setFieldValue("nucleotideCompleteness", isComplete);
 
         GeoLocation  geoLocation = getGeoLocation(country, organism);
-
         bioEntity.setFieldValue("geoLocation", geoLocation);
-
-
-//        InterMineObject region = setRegion(seqIdentifier, geoLocation, isRef, isComplete,
-//                    organism, model);
 
             //            if (strain != null) {
 //                Set<? extends InterMineObject> mrnas = new HashSet(Collections.singleton(strain));
@@ -136,38 +126,6 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
 //            }
 
     }
-
-    /**
-     * Create a Region with the given primaryIdentifier and organism or return null if Region is not in
-     * the data model.
-     * @param seqIdentifier primaryIdentifier of Region to create
-     * @param geoLocation
-     * @param isRef
-     * @param isComplete
-     * @param organism organism of Region to create
-     * @param model the data model
-     * @return an InterMineObject representing a Region or null if Region not in the data model
-     * @throws ObjectStoreException if problem storing
-     */
-    private InterMineObject setRegion(String seqIdentifier, String geoLocation, String isRef,
-                                      String isComplete, Organism organism, Model model)
-            throws ObjectStoreException {
-        InterMineObject region = null;
-        if (model.hasClassDescriptor(model.getPackageName() + ".Region")) {
-            @SuppressWarnings("unchecked") Class<? extends InterMineObject> regionCls =
-                    (Class<? extends InterMineObject>) model.getClassDescriptorByName("Region").getType();
-            region = getDirectDataLoader().createObject(regionCls);
-            region.setFieldValue("primaryIdentifier", seqIdentifier);
-            region.setFieldValue("referenceSequence", isRef);
-            region.setFieldValue("nucleotideCompleteness", isComplete);
-            region.setFieldValue("organism", organism);
-
-            getDirectDataLoader().store(region);
-        }
-        return region;
-    }
-
-
 
 }
 
