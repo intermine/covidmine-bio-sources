@@ -4,23 +4,16 @@
 <classes>
 <!-- add any <class> elements here -->
 
-    <class name="Strain" is-interface="true">
+
+    <class name="Genome" extends="SequenceFeature"  is-interface="true">
         <attribute name="nucleotideCompleteness" type="java.lang.String"/>
         <attribute name="referenceSequence" type="java.lang.String"/>
-        <reference name="geoLocation" referenced-type="GeoLocation" reverse-reference="strains"/>
-    </class>
-
-
-    <class name="Region" extends="SequenceFeature"  is-interface="true">
-        <attribute name="nucleotideCompleteness" type="java.lang.String"/>
-        <attribute name="referenceSequence" type="java.lang.String"/>
-        <reference name="geoLocation" referenced-type="GeoLocation" reverse-reference="regions"/>
+        <reference name="geoLocation" referenced-type="GeoLocation" reverse-reference="genomes"/>
     </class>
 
     <class name="GeoLocation" is-interface="true">
         <attribute name="country" type="java.lang.String"/>
-        <collection name="strains" referenced-type="Strain" reverse-reference="geoLocation"/>
-        <collection name="regions" referenced-type="Region" reverse-reference="geoLocation"/>
+        <collection name="genomes" referenced-type="Genome" reverse-reference="geoLocation"/>
     </class>
 
 
