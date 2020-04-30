@@ -1,5 +1,5 @@
 rootProject.name = 'bio-sources'
-include ':bio-source-gisaid-csv'
-project(':bio-source-gisaid-csv').projectDir = new File(settingsDir, './gisaid-csv')
+include ':bio-source-owid-csv'
+project(':bio-source-owid-csv').projectDir = new File(settingsDir, './owid-csv')
 include ':bio-source-ncbi-covid'
 project(':bio-source-ncbi-covid').projectDir = new File(settingsDir, './ncbi-covid')
