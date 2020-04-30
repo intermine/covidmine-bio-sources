@@ -156,31 +156,6 @@ public class OwidCsvConverter extends BioDirectoryConverter {
         return fields[label.getPos()].trim();
     }
 
-    private String getCountry(Header label, String[] fields) {
-        String originalCountry = getFieldValue(label, fields);
-        return CountryUtils.getCountry(originalCountry);
-    }
-
-    private String calculateActive(String confirmed, String recovered, String deaths) {
-        int active = 0;
-        if (!confirmed.isEmpty()) {
-            active = Integer.parseInt(confirmed);
-            if (active == 0) {
-                return Integer.toString(active);
-            }
-        }
-        if (!recovered.isEmpty()) {
-            active = active - Integer.parseInt(recovered);
-        }
-        if (!deaths.isEmpty()) {
-            active = active - Integer.parseInt(deaths);
-        }
-        if (active < 0) {
-            active = 0;
-        }
-        return Integer.toString(active);
-    }
-
     private class GeoLocation {
         String country;
         String locationKey;
