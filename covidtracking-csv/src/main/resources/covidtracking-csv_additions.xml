@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- This file details any extensions needed to the data model to store data from this source, everything else is automatically generated from the model description so this is all we need to do to add to the model. -->
+
+<classes>
+    <class name="GeoLocation" is-interface="true">
+        <attribute name="state" type="java.lang.String"/>
+        <attribute name="country" type="java.lang.String"/>
+    </class>
+    <class name="Distribution" is-interface="true">
+        <attribute name="date" type="java.util.Date"/>
+        <attribute name="totalCases" type="java.lang.Integer"/>
+        <attribute name="totalDeaths" type="java.lang.Integer"/>
+        <reference name="geoLocation" referenced-type="GeoLocation"/>
+        <collection name="dataSets" referenced-type="DataSet"/>
+    </class>
+</classes>
