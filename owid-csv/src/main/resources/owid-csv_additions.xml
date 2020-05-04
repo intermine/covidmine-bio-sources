@@ -5,7 +5,6 @@
     <class name="GeoLocation" is-interface="true">
         <attribute name="latitude" type="java.lang.Double"/>
         <attribute name="longitude" type="java.lang.Double"/>
-        <attribute name="province" type="java.lang.String"/>
         <attribute name="state" type="java.lang.String"/>
         <attribute name="country" type="java.lang.String"/>
         <collection name="distributions" referenced-type="Distribution"/>

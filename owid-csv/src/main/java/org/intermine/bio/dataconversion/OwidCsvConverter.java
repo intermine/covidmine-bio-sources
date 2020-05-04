@@ -10,10 +10,9 @@ package org.intermine.bio.dataconversion;
  *
  */
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
+import java.io.Reader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,13 +26,13 @@ import org.intermine.xml.full.Item;
 import org.apache.log4j.Logger;
 
 /**
- * 
+ * Converter to read the owid-covid-data.csv provided by the stable url
+ * https://covid.ourworldindata.org/data/owid-covid-data.csv
  * @author Daniela Butano
  */
-public class OwidCsvConverter extends BioDirectoryConverter {
+public class OwidCsvConverter extends BioFileConverter {
     private static final Logger LOG = Logger.getLogger(OwidCsvConverter.class);
-    private static final String FILE_NAME_PATTERN = "yyyy-MM-dd";
-    private static final String FILE_EXTENSION = ".csv";
+    private static final String DATE_PATTERN = "yyyy-MM-dd";
     private static final char FILE_SEPARATOR = ',';
     private Map<String, Item> locations = new HashMap<>();
     private Map<String, List<String>> locationDistributionIds = new HashMap<>();
@@ -43,30 +42,12 @@ public class OwidCsvConverter extends BioDirectoryConverter {
     }
 
     @Override
-    public void process(File dataDir) throws Exception {
+    public void process(Reader inputReader) throws Exception {
         LOG.warn("OwidCsvConverter process files started..");
-        if (dataDir.isDirectory()) {
-            for (File covidData : dataDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String s) {
-                    return s.toLowerCase().endsWith(FILE_EXTENSION);
-                }
-            })) {
-                storeDistributions(covidData);
-            }
-            storeGeoLocations();
-        }
-        LOG.warn("OwidCsvConverter process files completed.");
-    }
-
-    private void storeDistributions(File covidDataFile) {
-        String covidDataFileName = covidDataFile.getName();
-
         String[] drLine = null;
         CSVReader reader = null;
         try {
-            reader = new CSVReader(new FileReader(covidDataFile.getAbsolutePath()),
-                    FILE_SEPARATOR);
+            reader = new CSVReader(inputReader, FILE_SEPARATOR);
             //skip header
             reader.readNext();
             while ((drLine = reader.readNext()) != null) {
@@ -74,8 +55,10 @@ public class OwidCsvConverter extends BioDirectoryConverter {
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-            System.out.println("Problem reading file " + covidDataFileName);
+            System.out.println("Problem reading the file.");
         }
+        storeGeoLocations();
+        LOG.warn("OwidCsvConverter process files completed.");
     }
 
     private void storeDistribution(String[] countryDailyReport) {
@@ -115,7 +98,7 @@ public class OwidCsvConverter extends BioDirectoryConverter {
     }
 
     private Date convertDate(String dateAsString) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(FILE_NAME_PATTERN);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_PATTERN);
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date date = null;
         try {
@@ -165,25 +148,4 @@ public class OwidCsvConverter extends BioDirectoryConverter {
             locationKey = StringUtils.deleteWhitespace(country);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
