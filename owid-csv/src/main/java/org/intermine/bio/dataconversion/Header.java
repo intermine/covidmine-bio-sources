@@ -11,25 +11,15 @@ package org.intermine.bio.dataconversion;
  */
 
 /**
- *
+ * Data extracted from the csv file
  * @author Daniela Butano
  */
 
 public enum Header {
-    COUNTRY(1),
-    DATE(2),
-    CONFIRMED(3),
-    NEW_CONFIRMED(4),
-    DEATHS(5),
-    NEW_DEATHS(6);
-
-    private int pos;
-
-    private Header(int pos) {
-        this.pos = pos;
-    }
-
-    public int getPos() {
-        return pos;
-    }
+    COUNTRY,
+    DATE,
+    CONFIRMED,
+    NEW_CONFIRMED,
+    DEATHS,
+    NEW_DEATHS;
 }
