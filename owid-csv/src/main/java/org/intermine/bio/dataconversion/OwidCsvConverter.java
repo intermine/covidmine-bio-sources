@@ -35,12 +35,13 @@ public class OwidCsvConverter extends BioFileConverter {
     private static final String DATE_PATTERN = "yyyy-MM-dd";
     private static final String TIME_ZONE = "UTC";
     private static final char FILE_SEPARATOR = ',';
+    private static final String LICENCE = "https://creativecommons.org/licenses/by/4.0/";
     private HeaderMap header;
     private Map<String, Item> locations = new HashMap<>();
     private Map<String, List<String>> locationDistributionIds = new HashMap<>();
 
     public OwidCsvConverter(ItemWriter writer, Model model) {
-        super(writer, model, "OWID ", "Our World in Data COVID-19 dataset");
+        super(writer, model, "OWID ", "Our World in Data COVID-19 Data Set", LICENCE);
     }
 
     @Override
