@@ -33,8 +33,11 @@ import org.apache.log4j.Logger;
  */
 public class CovidTrackingCsvConverter extends BioFileConverter {
     private static final Logger LOG = Logger.getLogger(CovidTrackingCsvConverter.class);
-    private static final String DATE_PATTERN = "yyyyMMdd";
     private static final char FILE_SEPARATOR = ',';
+    private static final String DATE_PATTERN = "yyyyMMdd";
+    private static final String TIME_ZONE = "UTC";
+    private static final String US_COUNTRY = "United States";
+    private HeaderMap header;
     private Map<String, Item> locations = new HashMap<>();
     private Map<String, List<String>> locationDistributionIds = new HashMap<>();
     private Properties statesCodes = new Properties();
@@ -51,14 +54,12 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
         CSVReader reader = null;
         try {
             reader = new CSVReader(inputReader, FILE_SEPARATOR);
-            //skip header
-            reader.readNext();
+            header = new HeaderMap(reader.readNext());
             while ((drLine = reader.readNext()) != null) {
                 storeDistribution(drLine);
             }
         } catch (IOException ex) {
-            ex.printStackTrace();
-            System.out.println("Problem reading the file.");
+            new RuntimeException("Problem reading the file", ex);
         }
         storeGeoLocations();
         LOG.warn("CovidTrackingCsvConverter process files completed.");
@@ -105,7 +106,7 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
             store(distribution);
             cacheDistributionIds(location.locationKey, distribution.getIdentifier());
         } catch (ObjectStoreException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error storing distribution ", e);
         }
     }
 
@@ -124,12 +125,12 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
 
     private Date convertDate(String dateAsString) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_PATTERN);
-        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone(TIME_ZONE));
         Date date = null;
         try {
             date = simpleDateFormat.parse(dateAsString);
         } catch (ParseException ex) {
-            ex.printStackTrace();
+            throw new RuntimeException("Error parsing the date " + dateAsString, ex);
         } finally {
             return date;
         }
@@ -156,12 +157,16 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
                 store(geoLocation);
             }
         } catch (ObjectStoreException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error storing geoLocation ", e);
         }
     }
 
     private String getFieldValue(Header label, String[] fields) {
-        return fields[label.getPos()].trim();
+        int pos = header.getPosition(label);
+        if (pos != -1) {
+            return fields[pos].trim();
+        }
+        return StringUtils.EMPTY;
     }
 
     private class GeoLocation {
@@ -169,9 +174,9 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
         String state;
         String locationKey;
 
-        public GeoLocation(String[] countryDailyReport) {
-            country = "United States";
-            String stateCode = getFieldValue(Header.STATE_CODE, countryDailyReport);
+        public GeoLocation(String[] stateDailyReport) {
+            country = US_COUNTRY;
+            String stateCode = getFieldValue(Header.STATE_CODE, stateDailyReport);
             state = statesCodes.getProperty(stateCode);
             locationKey = stateCode;
         }

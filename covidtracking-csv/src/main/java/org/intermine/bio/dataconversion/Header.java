@@ -11,25 +11,15 @@ package org.intermine.bio.dataconversion;
  */
 
 /**
- *
+ * Data we want to extract from the csv file
  * @author Daniela Butano
  */
 
 public enum Header {
-    DATE(0),
-    STATE_CODE(1),
-    CONFIRMED(2),
-    DEATHS(14),
-    NEW_DEATHS(20),
-    NEW_CONFIRMED(23);
-
-    private int pos;
-
-    private Header(int pos) {
-        this.pos = pos;
-    }
-
-    public int getPos() {
-        return pos;
-    }
+    DATE,
+    STATE_CODE,
+    CONFIRMED,
+    DEATHS,
+    NEW_DEATHS,
+    NEW_CONFIRMED;
 }
