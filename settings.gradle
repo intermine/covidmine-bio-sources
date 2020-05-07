@@ -5,3 +5,5 @@ include ':bio-source-covidtracking-csv'
 project(':bio-source-covidtracking-csv').projectDir = new File(settingsDir, './covidtracking-csv')
 include ':bio-source-ncbi-covid'
 project(':bio-source-ncbi-covid').projectDir = new File(settingsDir, './ncbi-covid')
+include ':bio-source-covidmine-static'
+project(':bio-source-covidmine-static').projectDir = new File(settingsDir, './covidmine-static')

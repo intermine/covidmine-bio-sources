@@ -1,0 +1,31 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0"
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.6.2"
+    }
+}
+
+apply plugin: "com.jfrog.bintray"
+apply plugin: "com.jfrog.artifactory"
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['build/gen']
+        }
+        resources {
+            srcDirs = ['resources']
+        }
+    }
+}
+
+dependencies {
+    compile group: 'org.intermine', name: 'bio-model', version: bioVersion
+}
+
+processResources {
+    from('.') { include ("*.properties")}
+}
