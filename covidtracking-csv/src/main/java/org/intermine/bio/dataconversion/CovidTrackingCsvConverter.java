@@ -43,7 +43,7 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
     private Properties statesCodes = new Properties();
 
     public CovidTrackingCsvConverter(ItemWriter writer, Model model) {
-        super(writer, model, "COVIDTrackingProject", "The COVID Tracking Project Data Set");
+        super(writer, model, "COVIDTrackingProject", "Covid-19 data for US states");
     }
 
     @Override

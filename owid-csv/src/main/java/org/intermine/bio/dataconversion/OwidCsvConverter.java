@@ -41,7 +41,7 @@ public class OwidCsvConverter extends BioFileConverter {
     private Map<String, List<String>> locationDistributionIds = new HashMap<>();
 
     public OwidCsvConverter(ItemWriter writer, Model model) {
-        super(writer, model, "OWID ", "Our World in Data COVID-19 Data Set", LICENCE);
+        super(writer, model, "OWID ", "Our world in data Covid-19 data", LICENCE);
     }
 
     @Override
