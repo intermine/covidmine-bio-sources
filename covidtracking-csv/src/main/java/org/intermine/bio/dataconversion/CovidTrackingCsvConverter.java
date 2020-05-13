@@ -89,17 +89,17 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
             return;//we do no have a state (we only load the 50 states)
         }
         Item geoLocation = createGeoLocation(location);
-        Item distribution = createItem("Distribution");
+        Item distribution = createItem("Cases");
         Date date = convertDate(getFieldValue(Header.DATE, countryDailyReport));
         distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
         String confirmed = getFieldValue(Header.CONFIRMED, countryDailyReport);
-        distribution.setAttributeIfNotNull("totalCases", confirmed);
+        distribution.setAttributeIfNotNull("totalConfirmed", confirmed);
         String deaths = getFieldValue(Header.DEATHS, countryDailyReport);
         distribution.setAttributeIfNotNull("totalDeaths", deaths);
         String newDeaths = getFieldValue(Header.NEW_DEATHS, countryDailyReport);
         distribution.setAttributeIfNotNull("newDeaths", newDeaths);
         String newConfirmed = getFieldValue(Header.NEW_CONFIRMED, countryDailyReport);
-        distribution.setAttributeIfNotNull("newCases", newConfirmed);
+        distribution.setAttributeIfNotNull("newConfirmed", newConfirmed);
 
         try {
             distribution.setReference("geoLocation", geoLocation);
@@ -152,7 +152,7 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
         try {
             for (String locationKey : locations.keySet()) {
                 Item geoLocation = locations.get(locationKey);
-                geoLocation.setCollection("distributions",
+                geoLocation.setCollection("cases",
                         locationDistributionIds.get(locationKey));
                 store(geoLocation);
             }

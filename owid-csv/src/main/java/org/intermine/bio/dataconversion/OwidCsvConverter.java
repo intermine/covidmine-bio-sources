@@ -65,13 +65,13 @@ public class OwidCsvConverter extends BioFileConverter {
     private void storeDistribution(String[] countryDailyReport) {
         GeoLocation location = new GeoLocation(countryDailyReport);
         Item geoLocation = createGeoLocation(location);
-        Item distribution = createItem("Distribution");
+        Item distribution = createItem("Cases");
         Date date = convertDate(getFieldValue(Header.DATE, countryDailyReport));
         distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
         String confirmed = getFieldValue(Header.CONFIRMED, countryDailyReport);
-        distribution.setAttributeIfNotNull("totalCases", confirmed);
+        distribution.setAttributeIfNotNull("totalConfirmed", confirmed);
         String newConfirmed = getFieldValue(Header.NEW_CONFIRMED, countryDailyReport);
-        distribution.setAttributeIfNotNull("newCases", newConfirmed);
+        distribution.setAttributeIfNotNull("newConfirmed", newConfirmed);
         String deaths = getFieldValue(Header.DEATHS, countryDailyReport);
         distribution.setAttributeIfNotNull("totalDeaths", deaths);
         String newDeaths = getFieldValue(Header.NEW_DEATHS, countryDailyReport);
@@ -127,7 +127,7 @@ public class OwidCsvConverter extends BioFileConverter {
         try {
             for (String locationKey : locations.keySet()) {
                 Item geoLocation = locations.get(locationKey);
-                geoLocation.setCollection("distributions",
+                geoLocation.setCollection("cases",
                         locationDistributionIds.get(locationKey));
                 store(geoLocation);
             }
