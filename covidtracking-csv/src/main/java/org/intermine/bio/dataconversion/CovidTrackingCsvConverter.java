@@ -37,13 +37,14 @@ public class CovidTrackingCsvConverter extends BioFileConverter {
     private static final String DATE_PATTERN = "yyyyMMdd";
     private static final String TIME_ZONE = "UTC";
     private static final String US_COUNTRY = "United States";
+    private static final String LICENCE = "https://creativecommons.org/licenses/by-nc/4.0/";
     private HeaderMap header;
     private Map<String, Item> locations = new HashMap<>();
     private Map<String, List<String>> locationDistributionIds = new HashMap<>();
     private Properties statesCodes = new Properties();
 
     public CovidTrackingCsvConverter(ItemWriter writer, Model model) {
-        super(writer, model, "COVIDTrackingProject", "Covid-19 data for US states");
+        super(writer, model, "COVIDTrackingProject", "Covid-19 data for US states", LICENCE);
     }
 
     @Override
