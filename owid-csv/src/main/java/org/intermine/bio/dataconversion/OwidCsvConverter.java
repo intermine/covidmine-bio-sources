@@ -66,15 +66,15 @@ public class OwidCsvConverter extends BioFileConverter {
         GeoLocation location = new GeoLocation(countryDailyReport);
         Item geoLocation = createGeoLocation(location);
         Item distribution = createItem("Cases");
-        Date date = convertDate(getFieldValue(Header.DATE, countryDailyReport));
+        Date date = convertDate(getStringValue(Header.DATE, countryDailyReport));
         distribution.setAttributeIfNotNull("date", Long.toString(date.getTime()));
-        String confirmed = getFieldValue(Header.CONFIRMED, countryDailyReport);
+        String confirmed = getNumberValue(Header.CONFIRMED, countryDailyReport);
         distribution.setAttributeIfNotNull("totalConfirmed", confirmed);
-        String newConfirmed = getFieldValue(Header.NEW_CONFIRMED, countryDailyReport);
+        String newConfirmed = getNumberValue(Header.NEW_CONFIRMED, countryDailyReport);
         distribution.setAttributeIfNotNull("newConfirmed", newConfirmed);
-        String deaths = getFieldValue(Header.DEATHS, countryDailyReport);
+        String deaths = getNumberValue(Header.DEATHS, countryDailyReport);
         distribution.setAttributeIfNotNull("totalDeaths", deaths);
-        String newDeaths = getFieldValue(Header.NEW_DEATHS, countryDailyReport);
+        String newDeaths = getNumberValue(Header.NEW_DEATHS, countryDailyReport);
         distribution.setAttributeIfNotNull("newDeaths", newDeaths);
 
         try {
@@ -136,10 +136,25 @@ public class OwidCsvConverter extends BioFileConverter {
         }
     }
 
-    private String getFieldValue(Header label, String[] fields) {
+    private String getStringValue(Header label, String[] fields) {
         int pos = header.getPosition(label);
         if (pos != -1) {
             return fields[pos].trim();
+        }
+        return StringUtils.EMPTY;
+    }
+
+    private String getNumberValue(Header label, String[] fields) {
+        int pos = header.getPosition(label);
+        if (pos != -1) {
+            String value = fields[pos].trim();
+            try {
+                value = String.valueOf(Math.round(Double.parseDouble(value)));
+            } catch (NumberFormatException nfe) {
+                //they have changed type again double -> integer
+                //no need to do any round
+            }
+            return value;
         }
         return StringUtils.EMPTY;
     }
@@ -149,7 +164,7 @@ public class OwidCsvConverter extends BioFileConverter {
         String locationKey;
 
         public GeoLocation(String[] countryDailyReport) {
-            country = getFieldValue(Header.COUNTRY, countryDailyReport);
+            country = getStringValue(Header.COUNTRY, countryDailyReport);
             locationKey = StringUtils.deleteWhitespace(country);
         }
     }
