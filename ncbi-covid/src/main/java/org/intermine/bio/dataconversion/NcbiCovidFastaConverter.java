@@ -111,7 +111,7 @@ public class NcbiCovidFastaConverter extends FastaLoaderTask
 //            InterMineObject strain = setStrain(seqIdentifier, geoLocation, isRef, isComplete,
 //                    organism, model);
 
-        LOG.info("YYY " + seqIdentifier + "|" + isRef + "|" + isComplete);
+        LOG.debug("YYY " + seqIdentifier + "|" + isRef + "|" + isComplete);
 
 
         bioEntity.setFieldValue("referenceSequence", isRef);
